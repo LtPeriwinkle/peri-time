@@ -14,8 +14,9 @@ void TzBotClient::onMessage(Message message) {
   Embed emb = Embed(Embed::Flag::INVALID_EMBED);
   if (words[0] == ";test") {
     std::string cmd = words[1];
-    if (cmd == "a") {
-      msg = "b";
+    if (cmd == "quit" && message.author.ID == 658861212657909791) {
+      this->quit();
+      return;
     } else if (cmd == "something") {
       emb = Embed(R"({"title": "prototype bot"})");
     } else {
