@@ -10,6 +10,6 @@ public:
   void onServer(Server server) override;
 
 private:
-  std::unordered_map<Snowflake<Channel>::RawType, Channel> channelCache;
+  std::unordered_map<Snowflake<User>::RawType, User> userCache;
 };
-#endif // TZ_CLIENT_H
+#endif

@@ -4,13 +4,28 @@
 using namespace SleepyDiscord;
 
 void TzBotClient::onMessage(Message message) {
-  if (message.startsWith(";cpptest2")) {
-    sendMessage(message.channelID, "something");
+  std::vector<std::string> words;
+  std::string msg;
+  std::stringstream ss(message.content);
+  while (ss >> msg) {
+    words.push_back(msg);
+  }
+  msg = "";
+  Embed emb = Embed(Embed::Flag::INVALID_EMBED);
+  if (words[0] == ";test") {
+    std::string cmd = words[1];
+    if (cmd == "a") {
+      msg = "b";
+    } else if (cmd == "something") {
+      emb = Embed(R"({"title": "prototype bot"})");
+    } else {
+      msg = "unknown";
+    } 
+    sendMessage(message.channelID, msg, emb);
   }
 }
 void TzBotClient::onServer(Server server) {
-  for (Channel &channel : server.channels) {
-    channelCache.insert({channel.ID, channel});
+  for (User &user : server.members) {
+    userCache.insert({user.ID, user});
   }
 }
-
