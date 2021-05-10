@@ -4,21 +4,21 @@
 using namespace SleepyDiscord;
 
 void TzBotClient::onMessage(Message message) {
-  std::vector<std::string> words;
-  std::string msg;
-  std::stringstream ss(message.content);
-  while (ss >> msg) {
-    words.push_back(msg);
-  }
-  msg = "";
-  Embed emb = Embed(Embed::Flag::INVALID_EMBED);
-  if (words[0] == ";test") {
-    std::string cmd = words[1];
-    if (cmd == "quit" && message.author.ID == 658861212657909791) {
+  if (message.startsWith(";test")) {
+    std::vector<std::string> words;
+    std::string msg;
+    std::stringstream ss(message.content);
+    while (ss >> msg) {
+      words.push_back(msg);
+    }
+    msg = "";
+    Embed emb = Embed(Embed::Flag::INVALID_EMBED);
+    if (words[1] == "quit" && (message.author.ID.number() == 658861212657909791)) {
+      sendMessage(message.channelID, "bye");
       this->quit();
       return;
-    } else if (cmd == "something") {
-      emb = Embed(R"({"title": "prototype bot"})");
+    } else if (words[1] == "something") {
+      emb = Embed(R"({"title": "prototype tzbot"})");
     } else {
       msg = "unknown";
     } 
