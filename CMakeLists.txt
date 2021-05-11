@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.6)
 project(tzbot)
-add_executable(tzbot src/main.cpp src/tz_client.cpp include/tz_client.hpp)
+add_executable(tzbot src/main.cpp src/tz_client.cpp src/embed_templates.cpp include/tz_client.hpp include/embed_templates.hpp)
 target_include_directories(tzbot PUBLIC include)
 add_subdirectory(deps/sleepy-discord)
 target_link_libraries(tzbot sleepy-discord)

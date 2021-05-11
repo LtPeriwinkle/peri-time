@@ -1,4 +1,5 @@
 #include "tz_client.hpp"
+#include "embed_templates.hpp"
 #include "sleepy_discord/sleepy_discord.h"
 
 using namespace SleepyDiscord;
@@ -18,9 +19,9 @@ void TzBotClient::onMessage(Message message) {
       this->quit();
       return;
     } else if (words[1] == "something") {
-      emb = Embed(R"({"title": "prototype tzbot"})");
+      emb = Embed(gen_embed("tzbot", "does this work", 4293174));
     } else {
-      msg = "unknown";
+      emb = Embed(err_embed);
     } 
     sendMessage(message.channelID, msg, emb);
   }
