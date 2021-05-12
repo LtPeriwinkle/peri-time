@@ -1,4 +1,5 @@
 #include "sleepy_discord/sleepy_discord.h"
+#include <date/tz.h>
 #ifndef TZ_CLIENT_H
 #define TZ_CLIENT_H
 using namespace SleepyDiscord;
