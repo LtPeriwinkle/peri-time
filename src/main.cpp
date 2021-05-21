@@ -5,9 +5,9 @@
 #include <iostream>
 
 int main() {
-  std::ifstream tokFile(".bot-token");
-  std::string botToken;
-  getline(tokFile, botToken);
-  TzBotClient client(botToken, SleepyDiscord::USER_CONTROLED_THREADS);
+  std::ifstream tok_file(".bot-token");
+  std::string bot_token;
+  getline(tok_file, bot_token);
+  TzBotClient client(bot_token, SleepyDiscord::USER_CONTROLED_THREADS);
   client.run();
 }
