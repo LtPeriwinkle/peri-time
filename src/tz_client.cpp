@@ -3,6 +3,7 @@
 #include "sleepy_discord/sleepy_discord.h"
 #include <chrono>
 #include <date/tz.h>
+#include <regex>
 #include <sqlite3.h>
 #include <sstream>
 
@@ -66,12 +67,11 @@ void TzBotClient::onMessage(Message message) {
         }
       } else if (words[1] == "get") {
         if (words.size() == 2) {
-          int rc;
           sqlite3_stmt *stmt;
           sqlite3_prepare_v2(userDB.get(), get_tz_query.c_str(),
                              get_tz_query.length(), &stmt, nullptr);
           sqlite3_bind_int64(stmt, 1, message.author.ID.number());
-          rc = sqlite3_step(stmt);
+          int rc = sqlite3_step(stmt);
           if (rc != SQLITE_ROW) {
             std::string sql_error(sqlite3_errmsg(userDB.get()));
             emb = Embed(err_embed("database error: " + sql_error, &bot_user));
@@ -85,6 +85,37 @@ void TzBotClient::onMessage(Message message) {
           sqlite3_finalize(stmt);
         } else if (words.size() == 3) {
           /*getter for other users will be here*/
+          if (std::regex_match(words[2], std::regex("<@!([0-9]+)>"))) {
+            int64_t uid = std::stol(words[2].substr(3, 18), nullptr, 10);
+            User user;
+            try {
+              user = userCache.at(Snowflake<User>(uid));
+            } catch (std::out_of_range &e) {
+              user = this->getUser(Snowflake<User>(uid));
+            }
+            sqlite3_stmt *stmt;
+            sqlite3_prepare_v2(userDB.get(), get_tz_query.c_str(),
+                               get_tz_query.length(), &stmt, nullptr);
+            sqlite3_bind_int64(stmt, 1, uid);
+            int rc = sqlite3_step(stmt);
+            if (rc != SQLITE_ROW) {
+              std::string sql_error(sqlite3_errmsg(userDB.get()));
+              if (sql_error.compare("no more rows available") == 0) {
+                emb = Embed(
+                    err_embed("User has not set their timezone.", &bot_user));
+              } else {
+                emb =
+                    Embed(err_embed("database error: " + sql_error, &bot_user));
+              }
+            } else if (rc == SQLITE_ROW) {
+              std::string s(
+                  reinterpret_cast<char const *>(sqlite3_column_text(stmt, 0)));
+              emb = Embed(gen_embed("Timezone set by " + user.username + "#" +
+                                        user.discriminator,
+                                    s, &bot_user));
+            }
+            sqlite3_finalize(stmt);
+          }
         }
       } else {
         emb = Embed(err_embed("Command not found", &bot_user));
