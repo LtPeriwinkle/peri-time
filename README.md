@@ -5,7 +5,7 @@ moderators/admins do not need to ping users to set their time. This was requeste
 
 ### requirements
 * sqlite3
-* [date](https://github.com/howardhinnant/date) library, specifically the tz part
+* a tzdb installed on your system (probably already there)
 * c++11-compliant compiler
 * cmake
 
@@ -15,6 +15,7 @@ to get the executable:
 ```sh
 mkdir build && cd build
 cmake ..
+make -j3 # or whatever number of jobs you want
 ```
 
 then create a database with sqlite3:
@@ -23,4 +24,4 @@ then create a database with sqlite3:
 sqlite3 tz.db
 ```
 
-place your bot token (obtain from the discord developer portal) in a file named `.bot-token` in the same folder as the executable.
+place your bot token (obtain from the discord developer portal) in a file named `.bot-token` in the same folder as the executable and run.
