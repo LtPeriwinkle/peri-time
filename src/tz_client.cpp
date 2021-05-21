@@ -66,10 +66,10 @@ void TzBotClient::onMessage(Message message) {
           emb = Embed(err_embed("Not enough arguments!", &bot_user));
         }
       } else if (words[1] == "get") {
+        sqlite3_stmt *stmt;
+        sqlite3_prepare_v2(userDB.get(), get_tz_query.c_str(),
+                           get_tz_query.length(), &stmt, nullptr);
         if (words.size() == 2) {
-          sqlite3_stmt *stmt;
-          sqlite3_prepare_v2(userDB.get(), get_tz_query.c_str(),
-                             get_tz_query.length(), &stmt, nullptr);
           sqlite3_bind_int64(stmt, 1, message.author.ID.number());
           int rc = sqlite3_step(stmt);
           if (rc != SQLITE_ROW) {
@@ -84,7 +84,6 @@ void TzBotClient::onMessage(Message message) {
           }
           sqlite3_finalize(stmt);
         } else if (words.size() == 3) {
-          /*getter for other users will be here*/
           if (std::regex_match(words[2], std::regex("<@!([0-9]+)>"))) {
             int64_t uid = std::stol(words[2].substr(3, 18), nullptr, 10);
             User user;
@@ -93,9 +92,6 @@ void TzBotClient::onMessage(Message message) {
             } catch (std::out_of_range &e) {
               user = this->getUser(Snowflake<User>(uid));
             }
-            sqlite3_stmt *stmt;
-            sqlite3_prepare_v2(userDB.get(), get_tz_query.c_str(),
-                               get_tz_query.length(), &stmt, nullptr);
             sqlite3_bind_int64(stmt, 1, uid);
             int rc = sqlite3_step(stmt);
             if (rc != SQLITE_ROW) {
@@ -115,6 +111,51 @@ void TzBotClient::onMessage(Message message) {
                                     s, &bot_user));
             }
             sqlite3_finalize(stmt);
+          } else {
+            std::cout << words[2] << std::endl;
+            int64_t uid;
+            bool found = false;
+            User user;
+            Server server = serverCache.at(message.serverID);
+            for (ServerMember &x : server.members) {
+              std::cout << x.user.username << "\n" << x.nick << std::endl;
+              if (x.user.username.compare(words[2]) == 0) {
+                user = x.user;
+                uid = x.ID.number();
+                found = true;
+                break;
+              } else if (x.nick.compare(words[2]) == 0) {
+                user = x.user;
+                found = true;
+                uid = x.ID.number();
+                break;
+              }
+            }
+            if (!found) {
+              emb = Embed(err_embed("User not found. Please make sure to type "
+                                    "their username/nick exactly.",
+                                    &bot_user));
+            } else {
+              sqlite3_bind_int64(stmt, 1, uid);
+              int rc = sqlite3_step(stmt);
+              if (rc != SQLITE_ROW) {
+                std::string sql_error(sqlite3_errmsg(userDB.get()));
+                if (sql_error.compare("no more rows available") == 0) {
+                  emb = Embed(
+                      err_embed("User has not set their timezone.", &bot_user));
+                } else {
+                  emb = Embed(
+                      err_embed("database error: " + sql_error, &bot_user));
+                }
+              } else if (rc == SQLITE_ROW) {
+                std::string s(reinterpret_cast<char const *>(
+                    sqlite3_column_text(stmt, 0)));
+                emb = Embed(gen_embed("Timezone set by " + user.username + "#" +
+                                          user.discriminator,
+                                      s, &bot_user));
+              }
+              sqlite3_finalize(stmt);
+            }
           }
         }
       } else {
@@ -125,6 +166,7 @@ void TzBotClient::onMessage(Message message) {
   }
 }
 void TzBotClient::onServer(Server server) {
+  serverCache.insert({server.ID, server});
   for (User &user : server.members) {
     userCache.insert({user.ID, user});
   }
