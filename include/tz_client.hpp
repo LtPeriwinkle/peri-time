@@ -15,7 +15,7 @@ public:
 
 private:
   std::unordered_map<Snowflake<User>::RawType, User> userCache;
-  std::unordered_map<Snowflake<Server>::RawType, Server> serverCache;
+  std::unordered_map<Snowflake<Server>::RawType, Server> guildCache;
   std::string get_tz_query = "SELECT tz FROM tbl1 WHERE uid=?;";
   std::string set_tz_query = "INSERT OR REPLACE INTO tbl1(uid, tz) VALUES(?, ?);";
   sqlite3_handle userDB;

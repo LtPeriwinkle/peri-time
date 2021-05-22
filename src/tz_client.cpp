@@ -83,7 +83,7 @@ void TzBotClient::onMessage(Message message) {
                                   s, &bot_user));
           }
           sqlite3_finalize(stmt);
-        } else if (words.size() == 3) {
+        } else if (words.size() >= 3) {
           if (std::regex_match(words[2], std::regex("<@!([0-9]+)>"))) {
             int64_t uid = std::stol(words[2].substr(3, 18), nullptr, 10);
             User user;
@@ -112,22 +112,25 @@ void TzBotClient::onMessage(Message message) {
             }
             sqlite3_finalize(stmt);
           } else {
-            std::cout << words[2] << std::endl;
             int64_t uid;
             bool found = false;
             User user;
-            Server server = serverCache.at(message.serverID);
+            Server server = guildCache.at(message.serverID);
+            std::string name = "";
+            if (words.size() > 3) {
+                for (uint i = 2; i < words.size(); i++) {
+                  name.append(words[i]);
+                  name.append(" ");
+                }
+                name.pop_back();
+            } else {
+                name = words[2];
+            }
             for (ServerMember &x : server.members) {
-              std::cout << x.user.username << "\n" << x.nick << std::endl;
-              if (x.user.username.compare(words[2]) == 0) {
+              if (x.user.username.compare(name) == 0 || x.nick.compare(name) == 0) {
                 user = x.user;
                 uid = x.ID.number();
                 found = true;
-                break;
-              } else if (x.nick.compare(words[2]) == 0) {
-                user = x.user;
-                found = true;
-                uid = x.ID.number();
                 break;
               }
             }
@@ -166,7 +169,7 @@ void TzBotClient::onMessage(Message message) {
   }
 }
 void TzBotClient::onServer(Server server) {
-  serverCache.insert({server.ID, server});
+  guildCache.insert({server.ID, server});
   for (User &user : server.members) {
     userCache.insert({user.ID, user});
   }

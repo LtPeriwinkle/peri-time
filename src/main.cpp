@@ -9,5 +9,6 @@ int main() {
   std::string bot_token;
   getline(tok_file, bot_token);
   TzBotClient client(bot_token, SleepyDiscord::USER_CONTROLED_THREADS);
+  client.setIntents(771);
   client.run();
 }
