@@ -5,4 +5,5 @@
 std::string gen_embed(std::string title, std::string description,
                       SleepyDiscord::User *sender);
 std::string err_embed(std::string error, SleepyDiscord::User *sender);
+std::string help_embed(SleepyDiscord::User *sender);
 #endif
