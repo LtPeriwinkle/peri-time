@@ -28,16 +28,15 @@ std::string err_embed(std::string error, SleepyDiscord::User *sender) {
 std::string help_embed(SleepyDiscord::User *sender) {
     std::stringstream ss;
     ss << R"({
-  "embed": {
     "title": "Help",
-    "color": 21042,
+    "color": 21402,
     "footer": {
       "icon_url": "https://cdn.discordapp.com/avatars/)" << sender->ID.number() << "/" << sender->avatar << ".png" << R"(",
       "text": ")" << sender->username << R"("
     },
     "fields": [
       {
-        "name": "`;tz help`:",
+        "name": "`;tz help`",
         "value": "Show this message."
       },
       {
@@ -55,10 +54,8 @@ std::string help_embed(SleepyDiscord::User *sender) {
       {
         "name": "`;tz set <user> <timezone>`",
         "value": "Available only to those with Manage Users permission. Set the timezone for <user> to <timezone>. Timezone list available [here](https://kevinnovak.github.io/Time-Zone-Picker/). You can either ping the user or type their full username/full server nick **exactly**.",
-        "inline": true
       }
     ]
-  }
 })";
   return ss.str();
 }
