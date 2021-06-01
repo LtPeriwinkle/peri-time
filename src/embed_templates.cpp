@@ -53,7 +53,7 @@ std::string help_embed(SleepyDiscord::User *sender) {
       },
       {
         "name": "`;tz set <user> <timezone>`",
-        "value": "Available only to those with Manage Users permission. Set the timezone for <user> to <timezone>. Timezone list available [here](https://kevinnovak.github.io/Time-Zone-Picker/). You can either ping the user or type their full username/full server nick **exactly**.",
+        "value": "Available only to those with Admin, Kick, Ban, or Manage Nicknames permissions. Set the timezone for <user> to <timezone>. Timezone list available [here](https://kevinnovak.github.io/Time-Zone-Picker/). You can either ping the user or type their full username/full server nick **exactly**."
       }
     ]
 })";
