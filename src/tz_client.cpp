@@ -9,6 +9,8 @@
 
 using namespace SleepyDiscord;
 
+static const std::regex pong = std::regex("<@!?[0-9]{18,}>");
+
 void TzBotClient::onMessage(Message message) {
     if (message.author.ID != this->getID() && message.startsWith(";tz")) {
         std::vector<std::string> words;
@@ -17,7 +19,6 @@ void TzBotClient::onMessage(Message message) {
         while (ss >> msg) {
             words.push_back(msg);
         }
-        msg = "";
         Embed emb = Embed(Embed::Flag::INVALID_EMBED);
         if (words.size() >= 2) {
             User bot_user;
@@ -31,6 +32,12 @@ void TzBotClient::onMessage(Message message) {
                 sendMessage(message.channelID, "bye");
                 this->quit();
                 return;
+            } else if (words[1] == "list") {
+                emb = Embed(gen_embed(
+                    "Timezone List",
+                    "All available timezones and their locations can "
+                    "be found at https://kevinnovak.github.io/Time-Zone-Picker",
+                    &bot_user));
             } else if (words[1] == "help") {
                 emb = Embed(help_embed(&bot_user));
             } else if (words[1] == "set") {
@@ -79,10 +86,14 @@ void TzBotClient::onMessage(Message message) {
                         int64_t uid;
                         User user;
                         bool found = false;
-                        if (std::regex_match(words[2],
-                                             std::regex("<@!?[0-9]{18,}>"))) {
-                            uid =
-                                std::stol(words[2].substr(3, 18), nullptr, 10);
+                        if (std::regex_match(words[2], pong)) {
+                            if (words[2].find('!') != std::string::npos) {
+                                uid = std::stol(words[2].substr(3, 18), nullptr,
+                                                10);
+                            } else {
+                                uid = std::stol(words[2].substr(2, 18), nullptr,
+                                                10);
+                            }
                             try {
                                 user = userCache.at(Snowflake<User>(uid));
                             } catch (std::out_of_range &e) {
@@ -192,9 +203,14 @@ void TzBotClient::onMessage(Message message) {
                     sqlite3_finalize(stmt);
                 } else if (words.size() >= 3) {
                     bool found = false;
-                    if (std::regex_match(words[2],
-                                         std::regex("<@!?[0-9]{18,}>"))) {
-                        uid = std::stol(words[2].substr(3, 18), nullptr, 10);
+                    if (std::regex_match(words[2], pong)) {
+                        if (words[2].find('!') != std::string::npos) {
+                            uid =
+                                std::stol(words[2].substr(3, 18), nullptr, 10);
+                        } else {
+                            uid =
+                                std::stol(words[2].substr(2, 18), nullptr, 10);
+                        }
                         try {
                             user = userCache.at(Snowflake<User>(uid));
                         } catch (std::out_of_range &e) {
@@ -245,12 +261,119 @@ void TzBotClient::onMessage(Message message) {
                         } else if (rc == SQLITE_ROW) {
                             std::string s(reinterpret_cast<char const *>(
                                 sqlite3_column_text(stmt, 0)));
-                            emb = Embed(gen_embed("Timezone set by " +
-                                                      user.username + "#" +
-                                                      user.discriminator,
-                                                  s, &bot_user));
+                            emb =
+                                Embed(gen_embed(std::string("Timezone set by ")
+                                                    .append(user.username)
+                                                    .append("#")
+                                                    .append(user.discriminator),
+                                                s, &bot_user));
                         }
                         sqlite3_finalize(stmt);
+                    }
+                }
+            } else if (words[1] == "time") {
+                sqlite3_stmt *stmt;
+                sqlite3_prepare_v2(userDB.get(), get_tz_query.c_str(),
+                                   get_tz_query.length(), &stmt, nullptr);
+                int64_t uid;
+                User user;
+                bool found = false;
+                if (words.size() == 2) {
+                    found = true;
+                    uid = message.author.ID.number();
+                    user = message.author;
+                } else if (words.size() >= 3) {
+                    if (std::regex_match(words[2], pong)) {
+                        if (words[2].find('!') != std::string::npos) {
+                            uid =
+                                std::stol(words[2].substr(3, 18), nullptr, 10);
+                        } else {
+                            uid =
+                                std::stol(words[2].substr(2, 18), nullptr, 10);
+                        }
+                        try {
+                            user = userCache.at(Snowflake<User>(uid));
+                        } catch (std::out_of_range &e) {
+                            user = this->getUser(Snowflake<User>(uid));
+                        }
+                        found = true;
+                    } else {
+                        Server server = guildCache.at(message.serverID);
+                        std::string name = "";
+                        if (words.size() > 3) {
+                            for (uint i = 2; i < words.size(); i++) {
+                                name.append(words[i]);
+                                name.append(" ");
+                            }
+                            name.pop_back();
+                        } else {
+                            name = words[2];
+                        }
+                        for (ServerMember &x : server.members) {
+                            if (x.user.username.compare(name) == 0 ||
+                                x.nick.compare(name) == 0) {
+                                user = x.user;
+                                uid = x.ID.number();
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                const date::time_zone *zone;
+                date::zoned_time<std::chrono::duration<long>> time;
+                if (!found) {
+                    try {
+                        zone = date::locate_zone(words[2]);
+                        time = date::make_zoned(
+                            zone, date::floor<std::chrono::seconds>(
+                                      std::chrono::system_clock::now()));
+                        std::stringstream zonetime;
+                        zonetime << time;
+                        emb = Embed(gen_embed(std::string("Current time in ")
+                                                  .append(zone->name())
+                                                  .append(":"),
+                                              zonetime.str(), &bot_user));
+                    } catch (std::runtime_error &e) {
+                        emb = Embed(err_embed("Timezone or user not found. See "
+                                              "`;tz help` for proper usage.",
+                                              &bot_user));
+                    }
+                } else {
+                    sqlite3_stmt *stmt;
+                    sqlite3_prepare_v2(userDB.get(), get_tz_query.c_str(),
+                                       get_tz_query.length(), &stmt, nullptr);
+                    sqlite3_bind_int64(stmt, 1, uid);
+                    int rc = sqlite3_step(stmt);
+                    if (rc != SQLITE_ROW) {
+                        std::string sql_error(sqlite3_errmsg(userDB.get()));
+                        emb = Embed(err_embed(
+                            std::string("database error:").append(sql_error),
+                            &bot_user));
+                    } else {
+                        std::string s(reinterpret_cast<char const *>(
+                            sqlite3_column_text(stmt, 0)));
+                        try {
+                            zone = date::locate_zone(s);
+                            time = date::make_zoned(
+                                zone, date::floor<std::chrono::seconds>(
+                                          std::chrono::system_clock::now()));
+                            std::stringstream zonetime;
+                            zonetime << time;
+                            emb = Embed(gen_embed(
+                                std::string("Current time for ")
+                                    .append(user.username)
+                                    .append("#")
+                                    .append(user.discriminator)
+                                    .append(":"),
+                                std::string("(").append(s).append(") ").append(
+                                    zonetime.str()),
+                                &bot_user));
+                        } catch (std::runtime_error &_) {
+                            emb = Embed(err_embed(
+                                s.append(" not found in timezone database"),
+                                &bot_user));
+                        }
                     }
                 }
             } else {
@@ -259,7 +382,7 @@ void TzBotClient::onMessage(Message message) {
                                       &bot_user));
             }
             if (!emb.empty()) {
-                sendMessage(message.channelID, msg, emb);
+                sendMessage(message.channelID, "", emb);
             }
         }
     }
