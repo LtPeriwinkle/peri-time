@@ -14,12 +14,17 @@ public:
 
 private:
   std::string doCommand(SleepyDiscord::Message *message);
-  std::string tzGet(std::vector<std::string> words, SleepyDiscord::Message *message);
+  std::string tzGet(const std::vector<std::string> words, SleepyDiscord::Message *message);
+  std::string tzSet(const std::vector<std::string> words, SleepyDiscord::Message *message);
+  std::string tzTime(const std::vector<std::string> words, SleepyDiscord::Message *message);
+
+  std::string getZoneTime(const std::string name);
 
   std::unordered_map<SleepyDiscord::Snowflake<SleepyDiscord::User>::RawType, SleepyDiscord::User> userCache;
   std::unordered_map<SleepyDiscord::Snowflake<SleepyDiscord::Server>::RawType, SleepyDiscord::Server> guildCache;
   std::string get_tz_query = "SELECT tz FROM tbl1 WHERE uid=?;";
   std::string set_tz_query = "INSERT OR REPLACE INTO tbl1(uid, tz) VALUES(?, ?);";
   sqlite3_handle userDB;
+  SleepyDiscord::User botUser;
 };
 #endif
