@@ -48,14 +48,14 @@ std::string help_embed(SleepyDiscord::User *sender) {
       },
       {
         "name": "`;tz get [<user>]`",
-        "value": "Get the timezone that you set, or the timezone of the specified user"
+        "value": "Get the timezone that you set, or the timezone of the specified user. You can either ping the user or type their full username/full server nick **exactly**"
       },
       {
         "name": "`;tz set <user> <timezone>`",
         "value": "Available only to those with Admin, Kick, Ban, or Manage Nicknames permissions. Set the timezone for <user> to <timezone>. Timezone list available [here](https://kevinnovak.github.io/Time-Zone-Picker/). You can either ping the user or type their full username/full server nick **exactly**."
       },
       {
-        "name": "`;tz time [<user> | <timezone>]`"
+        "name": "`;tz time [<user> | <timezone>]`",
         "value": "Get the current time for <user> or in <timezone>."
       }
     ]
